@@ -15,6 +15,7 @@ use ArtoxLab\AbstractBusEventMessage\V1\BusMessageInterface;
 use ArtoxLab\AbstractBusEventMessage\V1\Events\EventInterface;
 use ArtoxLab\Bundle\ClarcMessageBusBundle\MessageBus\Interfaces\Stamp\EventActionStamp;
 use RuntimeException;
+use Symfony\Component\Messenger\Bridge\Amqp\Transport\AmqpStamp;
 use Symfony\Component\Messenger\Envelope;
 
 class EventMessage implements EventMessageInterface
@@ -42,12 +43,19 @@ class EventMessage implements EventMessageInterface
      *
      * @param EventInterface $event      Event
      * @param string         $actionName Event action name
+     * @param string|null    $routingKey Routing key
      *
      * @return Envelope
      */
-    public function makeMessage(EventInterface $event, string $actionName): Envelope
+    public function makeMessage(EventInterface $event, string $actionName, ?string $routingKey = null): Envelope
     {
-        return new Envelope($event, [new EventActionStamp($actionName)]);
+        $stamps = [new EventActionStamp($actionName)];
+
+        if (null !== $routingKey) {
+            $stamps[] = new AmqpStamp($routingKey);
+        }
+
+        return new Envelope($event, $stamps);
     }
 
     /**
